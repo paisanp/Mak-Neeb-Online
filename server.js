@@ -10,7 +10,12 @@ const server = http.createServer(app);
 const io = new Server(server);
 const rooms = new RoomManager();
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/health', (req, res) => {
+  res.json({ success: true });
+});
 registerSocketHandlers(io, rooms);
-const port = Number(process.env.PORT) || 3000;
-if (require.main === module) server.listen(port, () => console.log(`Mak Neeb Online: http://localhost:${port}`));
+const PORT = process.env.PORT || 3000;
+if (require.main === module) {
+  server.listen(PORT, '0.0.0.0', () => console.log(`Server running on ${PORT}`));
+}
 module.exports = { app, server, io, rooms };
