@@ -1,0 +1,3 @@
+const test=require('node:test');const assert=require('node:assert/strict');const RoomManager=require('../src/roomManager');
+test('create, join, full room, reconnect and cleanup',()=>{const m=new RoomManager({maxIdleMs:10});const {room,token}=m.create('หนึ่ง','s1');assert.match(room.roomCode,/^[A-Z0-9]{6}$/);m.join(room.roomCode,'สอง','s2');assert.equal(room.status,'playing');assert.throws(()=>m.join(room.roomCode,'สาม','s3'),e=>e.code==='ROOM_FULL');assert.equal(m.reconnect(room.roomCode,token,'new').player.socketId,'new');room.updatedAt=0;m.cleanup(20);assert.equal(m.rooms.size,0)});
+test('unknown room rejects',()=>{assert.throws(()=>new RoomManager().join('ABC123','x','s'),e=>e.code==='ROOM_NOT_FOUND')});

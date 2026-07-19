@@ -1,0 +1,28 @@
+@keyframes captureFlash { 0% { box-shadow: inset 0 0 0 100px #ed6b5aaa; } 100% { box-shadow: inset 0 0 0 0 #ed6b5a00; } }
+@keyframes turnPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.012); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.cell.captured-flash { animation: captureFlash .45s ease-out; }
+.turn-banner { display:flex;align-items:center;justify-content:center;gap:14px;min-height:82px;margin-bottom:16px;padding:14px 20px;border:2px solid transparent;border-radius:16px;text-align:left;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;background:var(--card);color:var(--ink); }
+.turn-banner__icon { display:grid;place-items:center;min-width:36px;font-size:30px;line-height:1; }
+.turn-banner__title { font-size:24px;font-weight:800;line-height:1.2; }
+.turn-banner__subtitle { margin-top:4px;font-size:14px;color:var(--muted); }
+.turn-banner--my-turn { color:var(--green);border-color:var(--green);background:linear-gradient(135deg,var(--card),#edf7dc);box-shadow:0 0 0 4px #184d3814,0 10px 28px #184d3820;animation:turnPulse 1.5s ease-in-out infinite; }
+.turn-banner--opponent-turn,.turn-banner--waiting,.turn-banner--loading { border-color:#cbd1c5;background:#f2f1e9; }
+.turn-banner--disconnected { color:var(--red);border-color:#d9a7a2;background:#fff1ef; }
+.turn-banner--win { color:var(--green);border-color:var(--green);background:#eef6df; }
+.turn-banner--finished { border-color:#aeb4aa;background:#efefe9; }
+.turn-banner__spinner { width:25px;height:25px;border:3px solid #cbd1c5;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite; }
+.player-card { position:relative;border:2px solid transparent;border-radius:14px;padding:12px 10px!important;transition:transform .2s ease,box-shadow .2s ease,opacity .2s ease; }
+.player-card:not(.player-card--active) { opacity:.82; }
+.player-card--active { transform:scale(1.025);border-color:var(--green);box-shadow:0 0 0 4px #184d3814;animation:turnPulse 1.8s ease-in-out infinite; }
+.player-card--active .player-piece { transform:scale(1.16); }
+.player-card--active::after { content:"กำลังเดิน";position:absolute;top:-10px;right:10px;padding:3px 9px;border-radius:999px;background:var(--green);color:white;font-size:11px;font-weight:700; }
+.player-card__info { min-width:0; }
+.player-card__name { display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.game-board--disabled { opacity:.72;cursor:not-allowed; }
+.game-board--disabled .cell { pointer-events:none;cursor:not-allowed; }
+.toast { position:fixed;left:50%;bottom:28px;z-index:50;max-width:calc(100vw - 32px);padding:11px 18px;border-radius:999px;background:var(--ink);color:white;font-weight:700;box-shadow:0 8px 30px #0004;opacity:0;transform:translate(-50%,20px);pointer-events:none;transition:opacity .2s ease,transform .2s ease; }
+.toast--visible { opacity:1;transform:translate(-50%,0); }
+@media(max-width:900px) { .board-wrap { order:-1; } .turn-banner { position:relative;z-index:2; } }
+@media(max-width:520px) { .turn-banner { min-height:72px;padding:12px 14px;gap:10px; } .turn-banner__title { font-size:20px; } .turn-banner__subtitle { font-size:13px;white-space:normal; } .turn-banner__icon { min-width:30px;font-size:25px; } .player-card { padding:10px 8px!important; } }
+@media(prefers-reduced-motion:reduce) { .turn-banner--my-turn,.player-card--active,.turn-banner__spinner,.cell.captured-flash { animation:none; } }
