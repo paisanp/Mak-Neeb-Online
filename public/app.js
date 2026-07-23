@@ -7,6 +7,7 @@ let pending = false;
 let lastCaptured = [];
 let previousTurn = null;
 let toastTimer = null;
+let waitingRooms = [];
 
 const board = new GameBoard($('board'), (from, to) => {
   pending = true;
@@ -19,6 +20,34 @@ function showToast(message) {
   $('toast').textContent = message;
   $('toast').classList.add('toast--visible');
   toastTimer = setTimeout(() => $('toast').classList.remove('toast--visible'), 2200);
+}
+
+function renderWaitingRooms() {
+  $('waitingCount').textContent = `${waitingRooms.length} ห้อง`;
+  $('waitingEmpty').classList.toggle('hidden', waitingRooms.length !== 0);
+  $('waitingRooms').replaceChildren(...waitingRooms.map(waitingRoom => {
+    const item = document.createElement('div');
+    item.className = 'waiting-room';
+    const info = document.createElement('div');
+    const name = document.createElement('strong');
+    name.textContent = waitingRoom.playerName;
+    const code = document.createElement('small');
+    code.textContent = `ห้อง ${waitingRoom.roomCode}`;
+    info.append(name, code);
+    const button = document.createElement('button');
+    button.textContent = 'เข้าร่วม';
+    button.onclick = () => {
+      const playerName = $('playerName').value.trim();
+      if (!playerName) {
+        $('lobbyMessage').textContent = 'กรุณากรอกชื่อก่อนเข้าร่วมห้อง';
+        $('playerName').focus();
+        return;
+      }
+      service.send('join-room', { playerName, roomCode: waitingRoom.roomCode });
+    };
+    item.append(info, button);
+    return item;
+  }));
 }
 
 function currentPlayer() {
@@ -86,6 +115,13 @@ function render() {
   $('roomCode').textContent = room.roomCode;
   renderPlayers();
   renderStatus(getGameStatusView(room, me));
+  const blackPlayer = room.players.find(player => player.color === 'black');
+  const whitePlayer = room.players.find(player => player.color === 'white');
+  $('blackScoreName').textContent = blackPlayer?.playerName || 'ฝ่ายดำ';
+  $('whiteScoreName').textContent = whitePlayer?.playerName || 'ฝ่ายขาว';
+  $('blackScore').textContent = room.scores?.black || 0;
+  $('whiteScore').textContent = room.scores?.white || 0;
+  $('roundNumber').textContent = `รอบ ${room.round || 1}`;
   $('blackCount').textContent = room.board.flat().filter(cell => cell === 'black').length;
   $('whiteCount').textContent = room.board.flat().filter(cell => cell === 'white').length;
   $('rematchBtn').classList.toggle('hidden', room.status !== 'finished');
@@ -111,7 +147,12 @@ $('leaveBtn').onclick = () => { service.send('leave-room', { roomCode: room.room
 $('closeModal').onclick = () => $('resultModal').close();
 service.on('connect', () => { $('connection').textContent = '● เชื่อมต่อแล้ว'; try { const saved = JSON.parse(localStorage.getItem('makNeebSession')); if (saved) service.send('reconnect-room', saved); } catch {} });
 service.on('disconnect', () => { $('connection').textContent = '● ขาดการเชื่อมต่อ'; showToast('การเชื่อมต่อมีปัญหา'); });
+service.on('waiting-rooms-updated', payload => {
+  if (!payload.success) return;
+  waitingRooms = payload.data.rooms || [];
+  renderWaitingRooms();
+});
 ['room-created', 'room-joined'].forEach(event => service.on(event, payload => { if (payload.success) { store(payload.data.room.roomCode, payload.data.playerToken); enter(payload.data); } }));
 ['game-started', 'room-updated', 'move-accepted', 'rematch-started', 'player-disconnected', 'player-reconnected'].forEach(event => service.on(event, payload => { pending = false; if (payload.success) enter(payload.data.room || payload.data, payload.data.captured || []); }));
 ['room-error', 'invalid-move'].forEach(event => service.on(event, showError));
-service.on('game-over', payload => { pending = false; if (!payload.success) return; enter(payload.data); const winner = payload.data.winner || room.winner; const player = room.players.find(item => item.color === winner?.color); $('resultTitle').textContent = player ? `${player.playerName} ชนะ!` : 'เกมจบ'; $('resultReason').textContent = winner?.reason || ''; $('resultModal').showModal(); });
+service.on('game-over', payload => { pending = false; if (!payload.success) return; enter(payload.data, payload.data.captured || []); const winner = payload.data.winner || room.winner; const player = room.players.find(item => item.color === winner?.color); $('resultTitle').textContent = player ? `${player.playerName} ชนะ!` : 'เกมจบ'; $('resultReason').textContent = winner?.reason || ''; $('resultModal').showModal(); });

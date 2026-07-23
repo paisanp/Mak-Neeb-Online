@@ -57,6 +57,11 @@ window.GameBoard = class GameBoard {
         cell.className = 'cell';
         cell.disabled = locked;
         cell.setAttribute('aria-label', `${displayRow + 1}, ${displayCol + 1}${color ? ` ${color}` : ''}`);
+        if (this.samePosition(serverPosition, state.lastMove?.from)) cell.classList.add('last-move-from');
+        if (this.samePosition(serverPosition, state.lastMove?.to)) {
+          cell.classList.add('last-move-to');
+          cell.setAttribute('aria-label', `${cell.getAttribute('aria-label')} หมากที่เดินล่าสุด`);
+        }
 
         if (color) {
           const piece = document.createElement('span');
@@ -71,6 +76,10 @@ window.GameBoard = class GameBoard {
 
     this.paint();
     this.animateCaptures(captured);
+  }
+
+  samePosition(first, second) {
+    return Boolean(first && second && first.row === second.row && first.col === second.col);
   }
 
   click(displayRow, displayCol) {
@@ -123,10 +132,17 @@ window.GameBoard = class GameBoard {
   }
 
   animateCaptures(captured) {
+    const capturedColor = this.state.lastMove?.color === 'black' ? 'white' : 'black';
     captured.forEach(serverPosition => {
       const displayPosition = this.toDisplayPosition(serverPosition);
       const index = displayPosition.row * this.boardSize + displayPosition.col;
-      this.element.children[index]?.classList.add('captured-flash');
+      const cell = this.element.children[index];
+      if (!cell) return;
+      cell.classList.add('captured-flash');
+      const ghost = document.createElement('span');
+      ghost.className = `piece ${capturedColor} captured-piece`;
+      ghost.setAttribute('aria-hidden', 'true');
+      cell.append(ghost);
     });
   }
 };

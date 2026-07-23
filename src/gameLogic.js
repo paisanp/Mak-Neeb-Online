@@ -52,8 +52,37 @@ function findInsertCaptures(board, movedPosition, color) {
   return captures;
 }
 
+function findOuterCaptures(board, movedPosition, color) {
+  const opponent = getOpponentColor(color), captures = [];
+  const axes = [[0, 1], [1, 0]];
+  for (const [dr, dc] of axes) {
+    let firstRow = movedPosition.row, firstCol = movedPosition.col;
+    let lastRow = movedPosition.row, lastCol = movedPosition.col;
+    while (isInsideBoard(firstRow - dr, firstCol - dc) && board[firstRow - dr][firstCol - dc] === color) {
+      firstRow -= dr;
+      firstCol -= dc;
+    }
+    while (isInsideBoard(lastRow + dr, lastCol + dc) && board[lastRow + dr][lastCol + dc] === color) {
+      lastRow += dr;
+      lastCol += dc;
+    }
+    const before = { row: firstRow - dr, col: firstCol - dc };
+    const after = { row: lastRow + dr, col: lastCol + dc };
+    if (isPosition(before) && isPosition(after)
+      && board[before.row][before.col] === opponent
+      && board[after.row][after.col] === opponent) {
+      captures.push(before, after);
+    }
+  }
+  return captures;
+}
+
 function calculateCapturedPieces(board, movedPosition, color) {
-  const captures = [...findSandwichCaptures(board, movedPosition, color), ...findInsertCaptures(board, movedPosition, color)];
+  const captures = [
+    ...findSandwichCaptures(board, movedPosition, color),
+    ...findInsertCaptures(board, movedPosition, color),
+    ...findOuterCaptures(board, movedPosition, color)
+  ];
   return [...new Map(captures.map(position => [`${position.row},${position.col}`, position])).values()];
 }
 
@@ -77,4 +106,4 @@ function checkWinner(board, nextColor) {
   if (!hasAnyValidMove(board, nextColor)) return { color: winner, reason: 'ฝ่ายตรงข้ามไม่มีตาเดิน' };
   return null;
 }
-module.exports = { SIZE, createInitialBoard, isInsideBoard, isPathClear, validateMove, getOpponentColor, findSandwichCaptures, findInsertCaptures, calculateCapturedPieces, applyMove, countPieces, hasAnyValidMove, hasValidMove: hasAnyValidMove, checkWinner, getWinner: checkWinner };
+module.exports = { SIZE, createInitialBoard, isInsideBoard, isPathClear, validateMove, getOpponentColor, findSandwichCaptures, findInsertCaptures, findOuterCaptures, calculateCapturedPieces, applyMove, countPieces, hasAnyValidMove, hasValidMove: hasAnyValidMove, checkWinner, getWinner: checkWinner };
